@@ -7030,7 +7030,7 @@ build_routing_policy_flow(struct hmap *lflows, struct ovn_datapath *od,
 }
 
 /* default logical flow prioriry for distributed routes */
-#define DROUTE_PRIO 400
+#define DROUTE_PRIO 0
 struct parsed_route {
     struct ovs_list list_node;
     struct v46_ip prefix;
