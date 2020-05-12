@@ -4578,6 +4578,10 @@ build_lswitch_input_port_sec(struct hmap *ports, struct hmap *datapaths,
             continue;
         }
 
+        if (!lsp_is_up(op->nbsp)) {
+            continue;
+        }
+
         ds_clear(&match);
         ds_clear(&actions);
         ds_put_format(&match, "inport == %s", op->json_key);
@@ -4635,7 +4639,7 @@ build_lswitch_output_port_sec(struct hmap *ports, struct hmap *datapaths,
      * they don't even receive multicast or broadcast packets.
      */
     HMAP_FOR_EACH (op, key_node, ports) {
-        if (!op->nbsp || lsp_is_external(op->nbsp)) {
+        if (!op->nbsp || lsp_is_external(op->nbsp) || !lsp_is_up(op->nbsp)) {
             continue;
         }
 
@@ -5341,10 +5345,10 @@ build_acls(struct ovn_datapath *od, struct hmap *lflows,
          *
          * This is enforced at a higher priority than ACLs can be defined. */
         ovn_lflow_add(lflows, od, S_SWITCH_IN_ACL, UINT16_MAX,
-                      "ct.inv || (ct.est && ct.rpl && ct_label.blocked == 1)",
+                      "(ct.est && ct.rpl && ct_label.blocked == 1)",
                       "drop;");
         ovn_lflow_add(lflows, od, S_SWITCH_OUT_ACL, UINT16_MAX,
-                      "ct.inv || (ct.est && ct.rpl && ct_label.blocked == 1)",
+                      "(ct.est && ct.rpl && ct_label.blocked == 1)",
                       "drop;");
 
         /* Ingress and Egress ACL Table (Priority 65535).
@@ -6843,7 +6847,7 @@ build_lswitch_flows(struct hmap *datapaths, struct hmap *ports,
 
     /* Ingress table 19: Destination lookup, unicast handling (priority 50), */
     HMAP_FOR_EACH (op, key_node, ports) {
-        if (!op->nbsp || lsp_is_external(op->nbsp)) {
+        if (!op->nbsp || lsp_is_external(op->nbsp) || !lsp_is_up(op->nbsp)) {
             continue;
         }
 
@@ -7365,7 +7369,7 @@ build_route_match(const struct ovn_port *op_inport, const char *network_s,
      * routing. */
     if (is_src_route) {
         dir = "src";
-        *priority = plen * 2;
+        *priority = 2;
     } else {
         dir = "dst";
         *priority = (plen * 2) + 1;
@@ -9707,6 +9711,10 @@ build_lrouter_flows(struct hmap *datapaths, struct hmap *ports,
      */
     HMAP_FOR_EACH (op, key_node, ports) {
         if (op->nbsp && !lsp_is_enabled(op->nbsp)) {
+            continue;
+        }
+
+        if (op->nbsp && !lsp_is_up(op->nbsp)) {
             continue;
         }
 
