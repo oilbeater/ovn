@@ -867,7 +867,7 @@ addr_sets_sb_address_set_handler(struct engine_node *node, void *data)
             !sset_is_empty(&as->updated)) {
         engine_set_node_state(node, EN_UPDATED);
     } else {
-        engine_set_node_state(node, EN_VALID);
+        engine_set_node_state(node, EN_UPDATED);
     }
 
     as->change_tracked = true;
